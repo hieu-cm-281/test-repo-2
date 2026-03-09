@@ -1,0 +1,4 @@
+[submodule "external/test-repo-1"]
+	path = external/test-repo-1
+	url = https://github.com/hieu-cm-281/test-repo-1.git
+	branch = production
