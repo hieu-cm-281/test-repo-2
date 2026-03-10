@@ -1,0 +1,43 @@
+name: Sync repo1 production-for-repo2 into develop
+
+on:
+  repository_dispatch:
+    types: [repo1-production-for-repo2-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Update submodule to latest production-for-repo2
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --remote --recursive
+
+      - name: Generate sync branch name
+        id: vars
+        run: |
+          echo "branch=bot/sync-repo1-production-for-repo2-$(date +%Y%m%d-%H%M%S)" >> "$GITHUB_OUTPUT"
+
+      - name: Create PR if submodule changed
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: sync test-repo-1 production-for-repo2"
+          title: "chore: sync test-repo-1 production-for-repo2"
+          body: |
+            Auto-sync submodule `external/test-repo-1` to latest `production-for-repo2` from `test-repo-1`.
+          branch: ${{ steps.vars.outputs.branch }}
+          base: develop
+          delete-branch: true
